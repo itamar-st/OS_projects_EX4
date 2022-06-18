@@ -9,21 +9,24 @@
 #define BUFF_SIZE 30
 void alarm_hand(int sig){
     signal(SIGALRM, alarm_hand);
-    printf("client- got an alarm wakeup signal\n");
+//    printf("client- got an alarm wakeup signal\n");
 }
 void sigUsr2_handler(int sig){
     signal(SIGUSR2, sigUsr2_handler);
-    printf("client- got an signal from the server\n");
+//    printf("client- got an signal from the server\n");
 }
 
 int main(int argc, char *argv[]) {
+
     if(argc != 5){
         printf("ERROR_FROM_EX4\n");
+        exit(0);
     }
     int fd;
     int clientFd;
     time_t t;
     signal(SIGALRM, alarm_hand);
+    signal(SIGUSR2, sigUsr2_handler);
     srand(time(&t));
     int counter = 0;
     int r;
@@ -53,28 +56,31 @@ int main(int argc, char *argv[]) {
     kill(atoi(argv[1]), SIGUSR1);
     alarm(30);
     pause();
-    printf("after signal from server\n");
+//    printf("client- after signal from server\n");
+    char clientFileName[32] = "to_client_";
+    strcat(clientFileName, pidAsStr);
+    strcat(clientFileName, ".txt");
+//    printf("client - filename is %s\n", clientFileName);
+    if((clientFd = open(clientFileName,O_RDONLY)) == -1){
+        perror("open clientFd");
+        printf("Client closed because no response was received from the server for 30 seconds\n");
+        exit(-1);
+    }
+    char answer[32];
+    int i;
+    for(i=0; i<10;i++){
+        answer[i] = 0;
+    }
+    if(read(clientFd, answer, sizeof(answer)) == -1){
+        perror("read clientFd");
+        exit(-1);
+    }
+    printf("%s\n",answer);
+
+    close(clientFd);
+    remove(clientFileName);
+
     exit(0);
-//    char clientFileName[32] = "to_client";
-//    strcat(clientFileName, pidAsStr);
-//    if((clientFd = open(clientFileName,O_RDONLY)) == -1){
-//        perror("open clientFd");
-//        printf("Client closed because no response was received from the server for 30 seconds");
-//        exit(-1);
-//    }
-//    char answer[32];
-//    if(read(clientFd, answer, sizeof(answer)) == -1){
-//        perror("read clientFd");
-//        exit(-1);
-//    }
-//    printf("%s",answer);
-
-
-
-
-
-
-    return 0;
 
 
 }
